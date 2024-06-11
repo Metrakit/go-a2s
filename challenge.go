@@ -25,7 +25,13 @@ func (c *Client) getChallenge(header []byte, fullResult byte) ([]byte, bool, err
 
 	reader := NewPacketReader(data)
 
-	switch int32(reader.ReadUint32()) {
+	value, success := reader.TryReadUint32()
+
+	if !success {
+		return nil, false, errors.New("Failed to read challenge response")
+	}
+
+	switch int32(value) {
 	case -2:
 		// We received an unexpected full reply
 		return data, true, nil
