@@ -150,6 +150,9 @@ func (r *PacketReader) TryReadString() (string, bool) {
 func (r *PacketReader) ReadString() string {
 	start := r.pos
 	for {
+		if r.pos >= len(r.buffer) {
+			break
+		}
 		if r.buffer[r.pos] == 0 {
 			r.pos++
 			break
