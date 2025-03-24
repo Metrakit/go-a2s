@@ -2,6 +2,7 @@ package a2s
 
 import (
 	"errors"
+	"log"
 )
 
 const (
@@ -144,6 +145,38 @@ func (c *Client) QueryInfo() (*ServerInfo, error) {
 	info := &ServerInfo{}
 
 	header := reader.ReadUint8()
+
+	if header == 0x41 {
+		challenge := reader.ReadInt32()
+		builder.Reset()
+		builder.WriteBytes([]byte{0xFF, 0xFF, 0xFF, 0xFF, A2S_INFO_REQUEST})
+		builder.WriteCString("Source Engine Query")
+		builder.WriteBytes([]byte{
+			byte(challenge),
+			byte(challenge >> 8),
+			byte(challenge >> 16),
+			byte(challenge >> 24),
+		})
+
+		if err := c.send(builder.Bytes()); err != nil {
+			return nil, err
+		}
+
+		data, err = c.receive()
+		if err != nil {
+			return nil, err
+		}
+
+		reader = NewPacketReader(data)
+		if reader.ReadInt32() != -1 {
+			return nil, ErrBadPacketHeader
+		}
+		header = reader.ReadUint8()
+		if header != A2S_INFO_RESPONSE {
+			return nil, ErrUnsupportedHeader
+		}
+	}
+
 	if header != A2S_INFO_RESPONSE {
 		return nil, ErrUnsupportedHeader
 	}
