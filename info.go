@@ -2,7 +2,6 @@ package a2s
 
 import (
 	"errors"
-	"log"
 )
 
 const (
